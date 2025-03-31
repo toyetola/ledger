@@ -1,0 +1,26 @@
+{
+  "name": "ledger",
+  "version": "1.0.0",
+  "description": "ledger system for banking transactions",
+  "main": "server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Oyetola Taiwo",
+  "license": "ISC",
+  "dependencies": {
+    "dayjs": "^1.11.13",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.7",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
