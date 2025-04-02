@@ -17,6 +17,10 @@ interface RequesUser {
 
 class UserController {
 
+    public async healthCheck(req: Request, res: Response): Promise<any> {
+        return res.status(200).json({status:"OK"})
+    }
+
     public async depositFund(req: Request, res: Response) : Promise<any>  {
         try {
             const { accountId, amount, currency } = req.body;

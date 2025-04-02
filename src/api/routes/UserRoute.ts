@@ -7,6 +7,8 @@ import { authMiddleware } from '../middlewares/AuthMiddleware'
 
 const router = Router();
 
+router.get('/health', UserController.healthCheck)
+
 // Define routes
 router.post('/login', AuthController.login);
 router.post('/register', AuthController.register)
