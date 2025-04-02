@@ -4,13 +4,14 @@ import  { config } from '../../config/index';
 
   
 const generateToken = (userId: string, role: string): string => {
-    
+    // @ts-ignore
     return jwt.sign({ userId, role }, config.jwtSecret as string, {
        expiresIn: config.accessTokenValidity ?? "15m"
     });
 }
 
 const generateRefreshToken = (userId : String, role: string) => {
+    // @ts-ignore
     return jwt.sign({ userId }, config.jwtRefreshSecret as string, { expiresIn: config.refreshTokenValidity as string | number }); 
 }
 
@@ -18,7 +19,7 @@ interface AuthRequest extends Request {
     user?: any;
 }
   
-const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): Response | void => {
+const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): any => {
 
     const token = req.header("Authorization")?.split(" ")[1];
   
