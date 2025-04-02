@@ -178,6 +178,17 @@ npm run test
 ```
 All 21 tests should pass
 
+## Containerizatio
+
+The application work well in a container.
+
+Have your database et up as specified in the url and run 
+
+```
+docker-compose up
+```
+The image will be built and lauched in the container
+
 ## Example Requests
 
 ### Get Users
