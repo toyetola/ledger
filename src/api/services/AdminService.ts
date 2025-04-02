@@ -11,7 +11,7 @@ class AdminService {
               console.log(users)
             return {success: true, users}
         } catch (error) {
-            return { message: "Error fetching transactions", error: error.message };
+            return { message: "Error fetching users", error: error.message };
         }
         
     }
