@@ -48,7 +48,7 @@ class AdminController {
     }
 
     static async getTransaction (req: Request, res: Response) : Promise<any> {
-        const { transactionId } = req.query;
+        const { transactionId } = req.params;
 
         try {
            const response = await AdminService.getTransaction(transactionId);

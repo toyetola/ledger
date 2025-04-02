@@ -21,7 +21,7 @@ const UserSchema: Schema = new Schema<IUser>(
     password: { type: String, required: true },
     role: { type: String, enum: ["admin", "user"], default: "user" },
     balance: { type: Number, default: 0 },
-    currency: { type: String, default: "USD" }
+    currency: { type: String, default: "NGN" }
   },
   {
     timestamps: true

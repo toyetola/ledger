@@ -1,9 +1,22 @@
 import User, {IUser} from "../models/User";
+import mongoose from "mongoose";
 import { Request, Response } from "express";
-import { authMiddleware, generateToken, generateRefreshToken } from '../middlewares/AuthMiddleware'
+import { generateToken, generateRefreshToken } from '../middlewares/AuthMiddleware'
+import Account from "../models/Account";
+import { registerSchema } from "../validations";
 
 class AuthController {
     static async register(req : Request, res: Response): Promise<any>  {
+
+        const validationRes = registerSchema.safeParse(req.body);
+        
+        if (!validationRes.success) {
+            return res.status(400).json({message:"Validation error", data: validationRes.error.errors });
+        }
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
         try {
             const { name, email, password, role, currency } = req.body;
         
@@ -21,12 +34,20 @@ class AuthController {
               currency: currency || "USD",
             });
         
-            await newUser.save();
+            await newUser.save({ session });
         
-            const accessToken = generateToken(newUser._id.toString());
-            const refreshToken = generateRefreshToken(newUser._id.toString());
+            const accessToken = generateToken(newUser._id.toString   (), role);
+            const refreshToken = generateRefreshToken(newUser._id.toString(), role);
+
+            await Account.create(
+                [{ userId: newUser._id, balance: 0, currency, type: "user" }],
+                { session }
+            );
+
+            await session.commitTransaction();
+            session.endSession();
         
-            res.status(201).json({
+            return res.status(201).json({
               message: "User registered successfully",
               user: {
                 id: newUser._id,
@@ -40,7 +61,10 @@ class AuthController {
               tokens: { accessToken, refreshToken },
             });
           } catch (error) {
-            res.status(500).json({ message: "Error registering user", error: error.message });
+            await session.abortTransaction();
+            session.endSession();
+            console.error(`Error registering user: ${error}`)
+            return res.status(500).json({ message: "Error registering user", error: error.message });
           }
     }
 
@@ -58,9 +82,9 @@ class AuthController {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
         
-            res.json({ token: generateToken(user._id.toString()) });
+            return res.json({ token: generateToken(user._id.toString(), user.role) });
         } catch (error) {
-            res.status(500).json({ error: "Server error" });
+            return res.status(500).json({ error: "Server error" });
         }
     }
 }

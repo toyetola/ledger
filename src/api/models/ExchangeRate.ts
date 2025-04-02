@@ -8,6 +8,6 @@ const ExchangeRateSchema = new mongoose.Schema({
     timestamps: true
 });
 
-const ExchangeRate = mongoose.model("Transaction", ExchangeRateSchema);
+const ExchangeRate = mongoose.model("ExchangeRate", ExchangeRateSchema);
 
 export default ExchangeRate;

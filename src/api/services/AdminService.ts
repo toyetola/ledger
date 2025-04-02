@@ -5,9 +5,10 @@ import User from '../models/User';
 class AdminService {
     static async getUsers (limit:any, page:any) {
         try {
-            const users = await User.find()
+            const users = await User.find({})
               .limit(Number(limit))
               .skip((Number(page) - 1) * Number(limit));
+              console.log(users)
             return {success: true, users}
         } catch (error) {
             return { message: "Error fetching transactions", error: error.message };
@@ -30,7 +31,7 @@ class AdminService {
 
     static async getTransactions (page: any, limit: any) {
         try {
-            const transactions = await Transaction.find()
+            const transactions = await Transaction.find({})
               .limit(Number(limit))
               .skip((Number(page) - 1) * Number(limit));
             return {success: true, transactions}
@@ -41,7 +42,7 @@ class AdminService {
 
     static async getTransaction (transactionId : any) {
         try {
-            const transaction = await Transaction.findById(transactionId).populate("userId", "name email");
+            const transaction = await Transaction.findById(transactionId);
         
             if (!transaction) return { message: "Transaction not found", success: false};
         
@@ -53,7 +54,7 @@ class AdminService {
 
     static async getAccounts (page: any, limit: any) {
         try {
-            const accounts = await Account.find()
+            const accounts = await Account.find({})
               .limit(Number(limit))
               .skip((Number(page) - 1) * Number(limit));
             return {success: true, accounts}

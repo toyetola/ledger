@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Account from '../models/Account'; 
 import Transaction from '../models/Transaction';
 import User from '../models/User';
+import ExchangeRate from "../models/ExchangeRate";
 
 class UserService {
 
@@ -46,9 +47,10 @@ class UserService {
                 createdAt: new Date()
             }], { session });
 
-            // Commit transaction
-            await session.commitTransaction();
-            session.endSession();
+            
+            if (session.inTransaction()) {  
+                await session.commitTransaction();
+            }
 
             return { 
                 success: true, 
@@ -59,8 +61,10 @@ class UserService {
             };
 
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if(session.inTransaction()){
+                await session.abortTransaction();
+            }
+            
             console.error("Withdrawal failed:", error.message);
 
             return { 
@@ -68,6 +72,8 @@ class UserService {
                 message: "Withdrawal failed", 
                 error: error.message 
             };
+        }finally {
+            session.endSession();
         }
     }
 
@@ -112,6 +118,10 @@ class UserService {
                 }
             ], { session });
 
+            if(session.inTransaction()){
+                session.commitTransaction()
+            }
+
             return { 
                 success: true, 
                 message: "Deposit successful", 
@@ -122,14 +132,19 @@ class UserService {
 
             
         }catch(error){
-            await session.abortTransaction();
-            session.endSession();
+
+            if(session.inTransaction()){
+                await session.abortTransaction();
+            }
+           
             console.error("Deposit failed:", error.message);
             return { 
                 success: false, 
                 message: "Deposit failed", 
                 error: error.message 
             }
+        }finally {
+            session.endSession();
         }
     }
 
@@ -157,11 +172,11 @@ class UserService {
 
     getProfile = async (userId: any) => {
         try {
-            // Fetch user details
+            // Fetching user details
             const user = await User.findById(userId).select("-password"); // Exclude password field
             if (!user) throw new Error("User not found");
     
-            // Fetch user's accounts
+            // Fetching user's accounts
             const accounts = await Account.find({ userId });
     
             return {
@@ -198,49 +213,72 @@ class UserService {
         session.startTransaction();
 
         try {
-            
+            // Fetch sender and receiver accounts
             const fromAccount = await Account.findById(fromAccountId).session(session);
             const toAccount = await Account.findById(toAccountId).session(session);
 
             if (!fromAccount || !toAccount) throw new Error("One or both accounts not found");
 
-            // Check currency compatibility
-            if (fromAccount.currency !== toAccount.currency) {
-            throw new Error("Currency mismatch between accounts");
+            // Fetch exchange rates
+            const fromCurrency = fromAccount.currency;
+            const toCurrency = toAccount.currency;
+
+            let convertedAmount = amount;
+
+            if (fromCurrency !== toCurrency) {
+                // Find exchange rate for conversion
+                const exchangeRate = await ExchangeRate.findOne({ baseCurrency: fromCurrency, targetCurrency: toCurrency }).session(session);
+
+                if (!exchangeRate) throw new Error(`No exchange rate found from ${fromCurrency} to ${toCurrency}`);
+
+                // Convert the amount
+                convertedAmount = amount * exchangeRate.rate;
             }
 
-            
+            // Check sender's balance after conversion
             if (fromAccount.balance < amount) throw new Error("Insufficient funds");
 
-            
+            // Deduct from sender
             fromAccount.balance -= amount;
             await fromAccount.save({ session });
 
-            // Credit to receiver
-            toAccount.balance += amount;
+            // Credit receiver
+            toAccount.balance += convertedAmount;
             await toAccount.save({ session });
 
-            // Create transaction records (double-entry)
+            // Create transaction records (double-entry accounting)
             await Transaction.create(
-            [
-                { fromAccount: fromAccountId, toAccount: toAccountId, amount, currency: fromAccount.currency,
-                    entries: [
-                        { account: fromAccountId, type: "debit", amount }, // Sender debited
-                        { account: toAccountId, type: "credit", amount }   // Receiver credited
-                      ], type: "transfer" }
-            ],
-            { session }
+                [
+                    {
+                        fromAccount: fromAccountId,
+                        toAccount: toAccountId,
+                        amount,
+                        convertedAmount,
+                        fromCurrency,
+                        toCurrency,
+                        entries: [
+                            { account: fromAccountId, type: "debit", amount, currency: fromCurrency },
+                            { account: toAccountId, type: "credit", amount: convertedAmount, currency: toCurrency }
+                        ],
+                        type: "transfer"
+                    }
+                ],
+                { session }
             );
 
-            // ✅ Commit transaction
-            await session.commitTransaction();
-            session.endSession();
+            // Commit the transaction
+            if (session.inTransaction()) {
+                await session.commitTransaction();
+            }
 
-            return { success: true, message: "Transfer successful" };
+            return { success: true, message: "Transfer successful", convertedAmount };
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
+            if (session.inTransaction()) {
+                await session.abortTransaction();
+            }
             throw new Error(error.message || "Transaction failed");
+        } finally {
+            session.endSession();
         }
 
     }

@@ -13,8 +13,7 @@ const AccountSchema = new Schema<IAccount>({
     balance: { type: Number, required: true, default: 0 },
     currency: { type: String, required: true },
     type: { type: String, enum: ["user", "bank_reserve"], required: true },
-    createdAt: { type: Date, default: Date.now }
-});
+}, {timestamps: true});
 
 const Account = mongoose.model<IAccount>("Account", AccountSchema);
 
