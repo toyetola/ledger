@@ -65,8 +65,8 @@ class UserController {
 
     public async getBalance(req: Request, res: Response) : Promise<any> {
         try {
-            const { accountId } = req.body;
-            const response = await UserService.getBalance(accountId);
+            const userId = req.user?.userId;
+            const response = await UserService.getBalance(userId);
             if(response?.success){
                 res.status(200).json({message:response?.message, success: response?.success ,data:response})
             }else{
