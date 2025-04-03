@@ -148,9 +148,9 @@ class UserService {
         }
     }
 
-    getBalance = async (accountId: string) => {
+    getBalance = async (userId: string | undefined) => {
         try {
-            const account = await Account.findById(accountId);
+            const account = await Account.findOne({userId});
             if (!account) throw new Error("Account not found");
     
             return {
