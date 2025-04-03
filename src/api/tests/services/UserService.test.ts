@@ -153,7 +153,7 @@ describe('UserService', () => {
     it('should return account balance successfully', async () => {
       const accountId = 'accountId';
 
-      Account.findById = jest.fn().mockResolvedValue({ _id: accountId, balance: 200, currency: 'USD' });
+      Account.findOne = jest.fn().mockResolvedValue({ _id: accountId, balance: 200, currency: 'USD' });
 
       const result = await UserService.getBalance(accountId);
 
@@ -168,7 +168,7 @@ describe('UserService', () => {
     it('should handle errors during getBalance', async () => {
       const accountId = 'accountId';
 
-      Account.findById = jest.fn().mockResolvedValue(null);
+      Account.findOne = jest.fn().mockResolvedValue(null);
 
       const result = await UserService.getBalance(accountId);
 
