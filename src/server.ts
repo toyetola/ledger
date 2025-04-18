@@ -8,7 +8,7 @@ import UserRoute from './api/routes/UserRoute'
 import './api/seeds/InitialDataSeed';
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 mongoose
     .connect(config.dbUrl)
